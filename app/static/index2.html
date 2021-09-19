@@ -1,0 +1,82 @@
+<head>
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=d5e4d19e-92c9-4d74-9256-02e7bf450f4e&lang=ru_RU" type="text/javascript">
+    </script>
+    
+</head>
+
+
+<body>
+    <div id="map" style="width: 800px; height: 600px"></div>
+    <div class="input-group ">
+        <div class="input-group-prepend">
+        <span class="input-group-text" >Зона доставки пешком</span>
+        </div>
+        <input type="text" class="form-control" name="input_walk" id="input_walk" max="10" value="2" onchange="rangeinput1.value = input_walk.value" />
+        <input type="range" name="input_walk_slider" oninput="input_walk.value = rangeinput1.value" 
+        class="form-control-range slider" type="range" min="1" max="10" value="2" id="rangeinput1" step="1" 
+        onchange="input_walk.value = rangeinput1.value" >
+    </div>
+
+    <div class="input-group ">
+        <div class="input-group-prepend">
+        <span class="input-group-text" >Зона доставки автомобилем</span>
+        </div>
+        <input type="text" class="form-control" name="input_automobile" id="input_automobile" max="50" value="5" onchange="rangeinput2.value = input_automobile.value" />
+        <input type="range" oninput="input_automobile.value = rangeinput2.value" 
+        class="form-control-range slider" type="range" min="1" max="50" value="5" id="rangeinput2" step="1" 
+        onchange="input_automobile.value = rangeinput2.value" >
+    </div>
+</body>
+
+<script type="text/javascript">
+    // Функция ymaps.ready() будет вызвана, когда
+    // загрузятся все компоненты API, а также когда будет готово DOM-дерево.
+    ymaps.ready(init);
+    function init(){
+        // Создание карты.
+        var myMap = new ymaps.Map("map", {
+            // Координаты центра карты.
+            // Порядок по умолчанию: «широта, долгота».
+            
+            center: [59.94, 30.32],
+            // Уровень масштабирования. Допустимые значения:
+            // от 0 (весь мир) до 19.
+            zoom: 10,
+            
+        });
+
+        var redCircle = new ymaps.GeoObject({
+    geometry: {
+        type: "Circle",
+        coordinates: [59.94, 30.32],
+        radius: 7000,
+        
+    },
+});
+    var blueCircle = new ymaps.GeoObject({
+    geometry: {
+        type: "Circle",
+        coordinates: [59.94, 30.32],
+        radius: 2000,
+        
+    },
+    
+    
+    
+        
+    });
+
+    redCircle.options.set( {
+        fillColor:"#DB709377",
+        strokeColor:"#DB7093FF"
+    })
+    blueCircle.options.set( {
+        fillColor:"#0099ff77",
+        strokeColor:"#0099ffFF"
+    })
+
+    myMap.geoObjects.add(redCircle)
+    myMap.geoObjects.add(blueCircle)       
+};
+
+</script>
