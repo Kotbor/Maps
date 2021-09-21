@@ -20,21 +20,8 @@
       <v-row>
         <v-col cols="6" style="height: 600px">
       
-        <yandex-map v-if="coords" :settings="settings" :coords="coords" zoom=11>
-              <ymap-marker 
-            marker-id="Blue" 
-            :coords="coords"
-            marker-type="Circle"
-            :circle-radius=blue_radius
-          />
-            <ymap-marker 
-            marker-id="Red" 
-            :coords="coords"
-            marker-type="Circle"
-            :marker-fill="red_fill"
-            :marker-stroke="red_stroke"
-            :circle-radius=red_radius
-          />
+        <yandex-map :settings="settings" :coords="coords" zoom=11 :use-object-manager= true @map-was-initialized="mapLoaded">
+
 
       </yandex-map>
        </v-col>
@@ -81,15 +68,17 @@
 </template>
 
 <script>
-import { yandexMap, ymapMarker, loadYmap} from 'vue-yandex-maps'
+import { yandexMap} from 'vue-yandex-maps'
 export default {
   
   
   
   name: 'App',
   
+  
+
   components: {
-    yandexMap, ymapMarker
+    yandexMap
     },
 
 
@@ -100,31 +89,117 @@ export default {
       coordorder: 'latlong',
       version: '2.1',
       },
-    coords: null, //[59.94, 30.32],
+    
+    coords: [59.94, 30.32],
+    circ_coords: [59.94, 30.32],
     red_fill:{"color":"#DB709377"},
     red_stroke:{"color":"#DB7093FF"},
     min: 1,
     max: 5,
-    range: [1, 5],
-
+    range: [1, 15],
+    red_circle: null,
+    blue_circle:null,
+    map_inst: null,
+    all_objects:null,
   
   }),
-  computed:{
 
-    red_radius: function(){
-      return this.range[1]*1000
-    },
-    blue_radius: function(){
-      return this.range[0]*1000},
-  },
-    async mounted() {
-    await loadYmap({ ...this.settings, debug: true });
+watch: {
+  range: function(){
+    if (this.blue_circle){
+    var storage = ymaps.geoQuery(this.all_objects) //.addToMap(this.map_inst)
+    this.blue_circle.geometry.setRadius(this.range[0]*1000)
+    //var objectsContainingBlue = result.searchInside(this.blue_circle)
+    var searched_blue = storage.searchInside(this.blue_circle)
+    searched_blue.setOptions({
+      fillColor: "#ff001a"
+    })
+    //console.log(objectsContainingBlue)
+    searched_blue.each(function(it){
+      console.log(it.properties._data.balloonContent)
+    })
+    
+  }
+    
+    if (this.red_circle){
+    this.red_circle.geometry.setRadius(this.range[1]*1000)
+  }}
+},
 
-    ymaps.geolocation.get().then((res) => {
-      this.coords = res.geoObjects.position;
-      console.log(this.coords);
-    });
+
+methods: {
+   
+    mapLoaded: function(inst){
+        this.map_inst = inst ;
+        var currentId = 0;
+        var objectManager = new ymaps.ObjectManager({
+        // Включаем кластеризацию.
+        clusterize: true,
+        // Опции кластеров задаются с префиксом 'cluster'.
+        clusterHasBalloon: false,
+        // Опции геообъектов задаются с префиксом 'geoObject'.
+        geoObjectOpenBalloonOnClick: false
+        });
+        // Добавляем красный круг.
+        var redCircle = new ymaps.GeoObject({
+              geometry: {
+                          type: "Circle",
+                          coordinates: [59.94, 30.32],
+                          radius: this.range[1]*1000,
+                          
+                        },
+             
+        });
+        redCircle.options.set( {
+          fillColor:"#DB709377",
+          strokeColor:"#DB7093FF"
+          })
+        
+        // копируем круг в data, чтобы иметь к нему доступ вне функции
+        this.red_circle=redCircle;
+        // Добавляем синий круг.
+        var blueCircle = new ymaps.GeoObject({
+              geometry: {
+                          type: "Circle",
+                          coordinates: [59.94, 30.32],
+                          radius: this.range[0]*1000,
+                        },
+        });
+        
+        blueCircle.options.set( {
+        fillColor:"#0099ff77",
+        strokeColor:"#0099ffFF"
+        })
+
+        // копируем круг в data, чтобы иметь к нему доступ вне функции
+        this.blue_circle=blueCircle;
+
+        inst.geoObjects.add(blueCircle)
+        inst.geoObjects.add(redCircle)
+      
+      
+      // Добавим единичный объект.
+        var map_objects = {
+              type: 'Feature',
+              id: currentId++,
+              geometry: {
+                  type: 'Point',
+                  coordinates: [59.93, 30.31]
+              },
+              properties: {
+                  hintContent: 'Содержание всплывающей подсказки',
+                  balloonContent: 'Содержание балуна'
+              }
+          }
+        
+        // Чтобы отображать большое количество объектов на карте бех тормозов - используем objectManager
+        objectManager.add(map_objects);
+        // Отображаем объекты на карте
+        inst.geoObjects.add(objectManager);
+        this.all_objects = map_objects
   },
+  }
+
   
 };
 </script>
